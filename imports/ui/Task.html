@@ -1,0 +1,25 @@
+<template name="task">
+  <li>
+    <input type="checkbox" checked="{{isChecked}}" class="toggle-checked" />
+
+    <span>{{text}}</span>
+
+   <select class="assign-project">
+  {{#if projectId}}
+    <option value="">Assign to project</option>
+  {{else}}
+    <option value="" selected>Assign to project</option>
+  {{/if}}
+
+  {{#each projects}}
+    {{#if isSelected _id ../projectId}}
+      <option value="{{_id}}" selected>{{name}}</option>
+    {{else}}
+      <option value="{{_id}}">{{name}}</option>
+    {{/if}}
+  {{/each}}
+</select>
+
+    <button class="delete">&times;</button>
+  </li>
+</template>
