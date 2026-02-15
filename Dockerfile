@@ -1,5 +1,5 @@
 # -------- Build Stage --------
-FROM node:14 AS builder
+FROM --platform=linux/amd64 node:20 AS builder
 
 RUN curl https://install.meteor.com/ | sh
 
@@ -10,7 +10,7 @@ RUN meteor npm install
 RUN meteor build --directory /app/build
 
 # -------- Runtime Stage --------
-FROM node:14
+FROM --platform=linux/amd64 node:20
 
 WORKDIR /app
 
