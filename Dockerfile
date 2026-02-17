@@ -1,40 +1,37 @@
-# ----------------------------
-# Build Stage
-# ----------------------------
-FROM node:20 AS builder
+# Stage 1: Build the Meteor bundle
+FROM node:18 AS builder
+
+# Enable superuser for Meteor
+ENV METEOR_ALLOW_SUPERUSER=true
+
+WORKDIR /app
 
 # Install Meteor
 RUN curl https://install.meteor.com/ | sh
 
-WORKDIR /app
-
-# Copy all project files
+# Copy app source
 COPY . .
 
-# Install dependencies (allow root inside Docker)
-RUN METEOR_ALLOW_SUPERUSER=true meteor npm install
+# Install dependencies
+RUN meteor npm install
 
-# Build production bundle
-RUN meteor build --directory /app/build --allow-superuser
+# Build the app for Linux
+RUN meteor build /build --server-only --allow-superuser --architecture os.linux.x86_64
 
-# ----------------------------
-# Runtime Stage
-# ----------------------------
-FROM node:20
+# Stage 2: Create runtime image
+FROM node:18-slim
 
 WORKDIR /app
 
-# Copy built app from builder stage
-COPY --from=builder /app/build/bundle /app
+# Copy bundle from builder
+COPY --from=builder /build/bundle /app
 
 # Install server dependencies
 WORKDIR /app/programs/server
 RUN npm install --production
 
-WORKDIR /app
-
-# Expose Meteor port
+# Expose port
 EXPOSE 3000
 
-# Start app
-CMD ["node", "main.js"]
+# Default command
+CMD ["node", "/app/main.js"]
