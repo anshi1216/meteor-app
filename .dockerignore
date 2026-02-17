@@ -1,4 +1,6 @@
 node_modules
+.meteor/local
+.DS_Store
 .git
 .gitignore
-.DS_Store
+Dockerfile

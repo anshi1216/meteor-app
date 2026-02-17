@@ -1,4 +1,4 @@
-# -------- Stage 1: Build --------
+# ---- Stage 1: Build Meteor bundle ----
 FROM node:18 AS builder
 
 ENV METEOR_ALLOW_SUPERUSER=true
@@ -10,32 +10,32 @@ WORKDIR /app
 # Install Meteor
 RUN curl https://install.meteor.com/ | sh
 
-# Copy project
+# Copy everything
 COPY . .
 
-# Install dependencies
+# Install Meteor dependencies
 RUN meteor npm install
 
-# Create build directory
+# Create build output
 RUN mkdir /build
 
-# Build for Linux
+# Build the production bundle
 RUN meteor build /build --server-only --allow-superuser
 
-# -------- Stage 2: Runtime --------
+# ---- Stage 2: Runtime ----
 FROM node:18-slim
 
 WORKDIR /app
 
-# Copy built bundle
+# Copy the tarball from builder stage
 COPY --from=builder /build/*.tar.gz /app
 
-# Extract bundle
+# Extract it
 RUN tar -xzf *.tar.gz && rm *.tar.gz
 
 WORKDIR /app/bundle/programs/server
 
-# Install server dependencies
+# Install only production deps
 RUN npm install --production
 
 WORKDIR /app/bundle
