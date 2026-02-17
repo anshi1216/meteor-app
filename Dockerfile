@@ -1,37 +1,45 @@
-# Stage 1: Build the Meteor bundle
+# -------- Stage 1: Build --------
 FROM node:18 AS builder
 
-# Enable superuser for Meteor
 ENV METEOR_ALLOW_SUPERUSER=true
+ENV ROOT_URL=http://localhost
+ENV MONGO_URL=mongodb://localhost:27017/meteor
 
 WORKDIR /app
 
 # Install Meteor
 RUN curl https://install.meteor.com/ | sh
 
-# Copy app source
+# Copy project
 COPY . .
 
 # Install dependencies
 RUN meteor npm install
 
-# Build the app for Linux
-RUN meteor build /build --server-only --allow-superuser --architecture os.linux.x86_64
+# Create build directory
+RUN mkdir /build
 
-# Stage 2: Create runtime image
+# Build for Linux
+RUN meteor build /build --server-only --allow-superuser
+
+# -------- Stage 2: Runtime --------
 FROM node:18-slim
 
 WORKDIR /app
 
-# Copy bundle from builder
-COPY --from=builder /build/bundle /app
+# Copy built bundle
+COPY --from=builder /build/*.tar.gz /app
+
+# Extract bundle
+RUN tar -xzf *.tar.gz && rm *.tar.gz
+
+WORKDIR /app/bundle/programs/server
 
 # Install server dependencies
-WORKDIR /app/programs/server
 RUN npm install --production
 
-# Expose port
+WORKDIR /app/bundle
+
 EXPOSE 3000
 
-# Default command
-CMD ["node", "/app/main.js"]
+CMD ["node", "main.js"]
